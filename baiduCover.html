@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>百度地图覆盖</title>
+	</head>
+	<body>
+		<div id="allmap"></div>
+	</body>
+	<!--
+    	作者：504105925@qq.com
+    	时间：2018-11-17
+    	描述： js
+    -->
+    <script type="text/javascript" src="js/jquery-3.3.1.min.js" ></script>
+	<script type="text/javascript" src="https://api.map.baidu.com/api?v=2.0&ak=ez1LpvMNlQYeEkNvDwsReSHeGRhbGXhg"></script>
+	<script>
+		var areaIs = false
+		var ply = null
+		var city = "北京"
+		var datas = [{
+		area :  "海淀区",
+		price:  "12.0万",
+		count:"11 套",
+		lng: 116.305438,
+		lat: 39.911643,
+		childer: [{
+		area :  "五道口",
+		price:  "10.0万",
+		count:"110 套",
+		lng: 116.351261,
+		lat: 39.982537
+		}]
+		},
+		{
+		area :  "东城区",
+		price:  "10.0万",
+		count:"110 套",
+		lng: 116.413845,
+		lat: 39.917343,
+		childer: [
+		{
+		area :  "金宝街",
+		price:  "10.0万",
+		count:"110 套",
+		lng: 116.416235,
+		lat: 39.924344
+		}]
+		},
+		{
+		area :  "西城区",
+		price:  "10.0万",
+		count:"110 套",
+		lng: 116.389187,
+		lat: 39.921058,
+		childer: [
+		{
+		area :  "宣武门",
+		price:  "10.0万",
+		count:"110 套",
+		lng: 116.385483,
+		lat: 39.905549
+		}]
+		}
+		]
+		var areadatas = [
+		
+		]
+		// 百度地图API功能
+		var map = new BMap.Map("allmap",{enableMapClick:false})
+		
+		// 初始化地图
+		map.centerAndZoom(city,12)
+		//开启鼠标滚轮缩放
+		map.enableScrollWheelZoom(true)
+		// 监听地图事件
+		map.addEventListener('zoomend',function() {
+			if (map.getZoom() < 12){
+			map.centerAndZoom(city,12)
+			} else if (map.getZoom() == 12) {
+				map.clearOverlays()
+				initOverlay(datas)
+				areaIs = false
+			} else if (map.getZoom() >= 14) {
+				if ( areaIs == false){
+				map.removeOverlay(ply)
+	            i=0
+	            map.clearOverlays()
+	           }
+			}
+		})
+		window.onload = function() {
+			initOverlay(datas)
+		}
+		// 设置城市 覆盖物
+		function initOverlay(datas) {
+		for (var j = 0;j<datas.length; j++){
+		// 创建覆盖物 lable
+		var coverLable = j
+		coverLable = new BMap.Label(datas[j].area, {
+			position: new BMap.Point(datas[j].lng,datas[j].lat),
+			offset: new BMap.Size(-60, -60)
+		})
+		// 设置 lable 样式
+		coverLable.setStyle({border:"1",background: ''})
+		
+		coverLable.setTitle(datas[j].area )
+		
+		coverLable.setContent("<div id='div1' onmouseover='myMouseOver("+j+")' onclick='myCkickOut("+j+")' class='circle' ><div> <p style='color: #fff'>"+ datas[j].area +"<br>"+ datas[j].price +" <br>"+ datas[j].count +"</p> </div></div>")
+		// 加载 覆盖物
+		map.addOverlay(coverLable)
+		}
+		}
+		// 设置县区级 覆盖物 
+		function initAreaOverlay(areadatas){
+			areaIs = true
+			for (var j = 0;j<areadatas.length; j++){
+		// 创建覆盖物 lable
+	    	var coverLable = j
+	    	coverLable = new BMap.Label(areadatas[j].area, {
+		    	position: new BMap.Point(areadatas[j].lng,areadatas[j].lat),
+		    	offset: new BMap.Size(-60, -60)
+	    	})
+		// 设置 lable 样式
+		coverLable.setStyle({border:"1",background: ''})
+		
+		coverLable.setTitle(areadatas[j].area )
+		
+		coverLable.setContent("<div id='div1' onmouseover='("+j+")' onclick='("+j+")' class='areacircle' ><div> <p style='color: #fff'>"+ areadatas[j].area +"<br>"+ areadatas[j].price +" <br>"+ areadatas[j].count +"</p> </div></div>")
+		// 加载 覆盖物
+		map.addOverlay(coverLable)
+		
+		}
+		}
+		
+	    var i = 0
+		function myMouseOver(index) {
+        // 获取边界
+		var bdary = new BMap.Boundary();
+		var boundArea = city +""+ datas[index].area
+	    if (i == 0) {
+	    	 bdary.get(boundArea, function(rs) {
+	    	// 给目标行政区划添加边框，其实就是给目标行政区划添加一个没有填充物的遮罩层
+	        ply = new BMap.Polygon(rs.boundaries[0], { strokeWeight: 4, strokeColor: "#f00",fillColor: "#fff" })
+	        ply.setStrokeOpacity(0.5)
+	        map.addOverlay(ply)
+	        ply.addEventListener('mouseout',function() {
+	        	map.removeOverlay(ply)
+	        	i=0
+	        })
+	      })
+	    	i = 1
+	    }
+		}
+		function myCkickOut(index) {
+		 map.removeOverlay(ply)
+	     i=0
+	     map.clearOverlays()
+	     var labelpoint = new  BMap.Point(datas[index].lng,datas[index].lat)
+		 map.centerAndZoom(labelpoint,13)
+		 initAreaOverlay(datas[index].childer)
+        }
+		
+//		// 监听点击标注事件 rightclick
+//		coverLable.addEventListener('click',function() {
+//			// 设置中点击标注坐标
+//			var labelpoint = coverLable.getPosition()
+//		   // 定位
+//		   map.centerAndZoom(labelpoint,11)
+//
+//        map.clearOverlays()
+//        var delIs =removePolygon(ply)
+//			if (delIs == true){
+//				ply = null
+//			}
+//
+//		})
+//
+//	
+//			// 监听鼠标进去标注事件mouseover
+//		coverLable.addEventListener('mouseover',function() {
+//			var boundArea = city +""+ coverLable.getTitle()
+//			console.log(boundArea )
+//			if (ply != "[object Polygon]") {
+//			   // 获取边界
+//			var bdary = new BMap.Boundary();
+//	        bdary.get(boundArea, function(rs) { //获取行政区域
+//	       // 给目标行政区划添加边框，其实就是给目标行政区划添加一个没有填充物的遮罩层
+//	        ply = new BMap.Polygon(rs.boundaries[0], { strokeWeight: 2, strokeColor: "#00f",fillColor: "#00f" })
+//	        ply.setStrokeOpacity(0.1)
+//	        map.addOverlay(ply)
+//	          // 监听 
+//			  ply.addEventListener('mouseout',function() {
+//			    var delIs =removePolygon(ply)
+//				  if (delIs == true){
+//					ply = null
+//				  }
+//		      })
+//	        
+//	        })
+//	       }
+//	    })
+//		
+//		
+//		 
+//	  function removePolygon() {
+//		var alloverlay = map.getOverlays()
+//			for (var i=0;i < alloverlay.length;i++){
+//               if ( alloverlay[i] == "[object Polygon]"){
+//               alloverlay[i] .hide()
+//               map.removeOverlay(alloverlay[i])
+//               }
+//			}
+//	  }
+	</script>
+	
+	<!--
+    	作者：504105925@qq.com
+    	时间：2018-11-17
+    	描述：   CSS
+    -->
+	<style type="text/css">  
+    html{height:100%}    
+    body{height:100%;margin:0px;padding:0px}    
+    #allmap{height:100%}
+    
+    .circle{
+    	width: 100px;     
+    	height: 100px;    
+    	background-color:#00f;     
+    	border-radius: 50%;    
+    	-moz-border-radius: 50%;     
+    	-webkit-border-radius: 50%;
+        /*flex 布局*/
+   		display: flex;
+   		/*实现垂直居中*/
+  		align-items: center;
+  		/*实现水平居中*/
+  		justify-content: center;
+   		text-align: justify;
+  		margin:0 auto;
+  		filter:alpha(Opacity=100);
+  		-moz-opacity:1;
+  		opacity: 0.8;
+    }    
+    
+    .areacircle{
+    	width: 100px;     
+    	height: 100px;    
+    	background-color:#A2CD5A;     
+    	border-radius: 50%;    
+    	-moz-border-radius: 50%;     
+    	-webkit-border-radius: 50%;
+        /*flex 布局*/
+   		display: flex;
+   		/*实现垂直居中*/
+  		align-items: center;
+  		/*实现水平居中*/
+  		justify-content: center;
+   		text-align: justify;
+  		margin:0 auto;
+  		filter:alpha(Opacity=100);
+  		-moz-opacity:1;
+  		opacity: 0.8;
+    }   
+</style> 
+</html>
